@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wake Your Boyfriend Simulator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #121212;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        h1 {
+            color: #ff69b4;
+            margin: 0;
+            padding: 10px;
+            position: absolute;
+            top: 0;
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 0px #000;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        #boyfriend {
+            image-rendering: pixelated;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        #timer {
+            position: absolute;
+            bottom: 10px;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        #heart {
+            position: absolute;
+            font-size: 30px;
+            color: #ff69b4;
+            animation: float 2s ease-in-out;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Wake Your Boyfriend Simulator</h1>
+    
+    <div id="game-container">
+        <canvas id="boyfriend" width="256" height="256"></canvas>
+    </div>
+    
+    <div id="timer">Status: Sleeping</div>
+    
+    <script>
+        const canvas = document.getElementById('boyfriend');
+        const ctx = canvas.getContext('2d');
+        const gameContainer = document.getElementById('game-container');
+        const timerDisplay = document.getElementById('timer');
+        
+        // Adjust canvas size
+        function resizeCanvas() {
+            const size = Math.min(window.innerWidth, window.innerHeight) * 0.8;
+            canvas.style.width = `${size}px`;
+            canvas.style.height = `${size}px`;
+        }
+        
+        // Call resize on load and window resize
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // Game state
+        let isAwake = false;
+        let isLove = false;
+        let sleepTimer = null;
+        let timeLeft = 15; // Changed from 30 to 15 seconds
+        let loveTimer = null;
+        
+        // Pixel art definitions
+        const pixelSize = 4; // Increased from 1 to 4 for 256x256 canvas
+        
+        // Colors
+        const skinColor = "#FFD1B3";
+        const hairColor = "#5E3A1C";
+        const eyeColor = "#4B8FD9";
+        const sheetColor = "#E6E6FA";
+        const pillowColor = "#FFFFFF";
+        const heartColor = "#FF69B4";
+        
+        // Function to draw sleeping boyfriend
+        function drawSleeping() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw pillow
+            ctx.fillStyle = pillowColor;
+            ctx.fillRect(40, 60, 176, 40);
+            
+            // Draw sheet
+            ctx.fillStyle = sheetColor;
+            ctx.fillRect(32, 100, 192, 120);
+            
+            // Draw head (partially visible)
+            ctx.fillStyle = skinColor;
+            ctx.fillRect(80, 60, 96, 60);
+            
+            // Draw hair
+            ctx.fillStyle = hairColor;
+            ctx.fillRect(72, 52, 112, 28);
+            ctx.fillRect(64, 60, 24, 40);
+            
+            // Draw closed eyes (as "z")
+            ctx.fillStyle = "#000000";
+            // Z
+            ctx.fillRect(168, 32, 32, 8);
+            ctx.fillRect(184, 40, 8, 8);
+            ctx.fillRect(176, 48, 8, 8);
+            ctx.fillRect(168, 56, 32, 8);
+            
+            // Smaller Z
+            ctx.fillRect(192, 72, 24, 4);
+            ctx.fillRect(204, 76, 4, 4);
+            ctx.fillRect(200, 80, 4, 4);
+            ctx.fillRect(192, 84, 24, 4);
+        }
+        
+        // Function to draw awake boyfriend
+        function drawAwake() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw pillow
+            ctx.fillStyle = pillowColor;
+            ctx.fillRect(40, 140, 176, 40);
+            
+            // Draw sheet
+            ctx.fillStyle = sheetColor;
+            ctx.fillRect(32, 180, 192, 40);
+            
+            // Draw body
+            ctx.fillStyle = skinColor;
+            ctx.fillRect(80, 80, 96, 60); // Head
+            ctx.fillRect(100, 140, 56, 40); // Neck/Chest
+            
+            // Draw hair
+            ctx.fillStyle = hairColor;
+            ctx.fillRect(72, 72, 112, 28);
+            ctx.fillRect(64, 80, 24, 40);
+            
+            // Draw eyes
+            ctx.fillStyle = eyeColor;
+            ctx.fillRect(96, 96, 16, 16);
+            ctx.fillRect(144, 96, 16, 16);
+            
+            // Draw mouth (slight smile)
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(112, 120, 32, 4);
+            ctx.fillRect(108, 116, 4, 4);
+            ctx.fillRect(144, 116, 4, 4);
+        }
+        
+        // Function to draw love reaction (awake with hearts)
+        function drawLove() {
+            // First draw awake boyfriend
+            drawAwake();
+            
+            // Add hearts
+            ctx.fillStyle = heartColor;
+            
+            // Heart 1
+            drawHeart(180, 60);
+            
+            // Heart 2
+            drawHeart(200, 100);
+            
+            // Heart 3
+            drawHeart(160, 40);
+        }
+        
+        // Helper function to draw a small pixel heart
+        function drawHeart(x, y) {
+            ctx.fillRect(x, y+4, 4, 4);
+            ctx.fillRect(x+8, y+4, 4, 4);
+            ctx.fillRect(x-4, y+8, 20, 4);
+            ctx.fillRect(x, y+12, 12, 4);
+            ctx.fillRect(x+4, y+16, 4, 4);
+        }
+        
+        // Function to create and animate a heart
+        function createFloatingHeart(x, y) {
+            const heart = document.createElement('div');
+            heart.id = 'heart';
+            heart.innerHTML = '❤️';
+            heart.style.left = `${x}px`;
+            heart.style.top = `${y}px`;
+            gameContainer.appendChild(heart);
+            
+            // Remove heart after animation completes
+            setTimeout(() => {
+                heart.remove();
+            }, 2000);
+        }
+        
+        // Function to wake up boyfriend
+        function wakeUp() {
+            isAwake = true;
+            isLove = false;
+            drawAwake();
+            timeLeft = 15; // Changed from 30 to 15 seconds
+            updateTimer();
+            
+            // Clear any existing timer
+            if (sleepTimer) clearInterval(sleepTimer);
+            
+            // Start countdown timer
+            sleepTimer = setInterval(() => {
+                timeLeft--;
+                updateTimer();
+                
+                if (timeLeft <= 0) {
+                    fallAsleep();
+                }
+            }, 1000);
+        }
+        
+        // Function to make boyfriend fall asleep
+        function fallAsleep() {
+            isAwake = false;
+            isLove = false;
+            drawSleeping();
+            timerDisplay.textContent = "Status: Sleeping";
+            
+            // Clear countdown timer
+            if (sleepTimer) {
+                clearInterval(sleepTimer);
+                sleepTimer = null;
+            }
+        }
+        
+        // Function to show love reaction
+        function showLove() {
+            isLove = true;
+            drawLove();
+            
+            // Clear previous love timer
+            if (loveTimer) clearTimeout(loveTimer);
+            
+            // Reset to awake after 1 second
+            loveTimer = setTimeout(() => {
+                isLove = false;
+                if (isAwake) drawAwake();
+            }, 1000);
+        }
+        
+        // Update timer display
+        function updateTimer() {
+            timerDisplay.textContent = `Status: Awake (${timeLeft}s until sleep)`;
+        }
+        
+        // Initial state - boyfriend is sleeping
+        fallAsleep();
+        
+        // Add click event listener to the game container
+        canvas.addEventListener('click', (event) => {
+            // Get click position relative to the canvas
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            if (isAwake) {
+                // If already awake, show love reaction and reset timer
+                showLove();
+                createFloatingHeart(event.clientX, event.clientY);
+                timeLeft = 15; // Changed from 30 to 15 seconds
+                updateTimer();
+            } else {
+                // If sleeping, wake up
+                wakeUp();
+            }
+        });
+    </script>
+</body>
+</html>
